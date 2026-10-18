@@ -1,0 +1,45 @@
+[
+  {
+    "label": "A",
+    "operationId": "6b50284c63d74a93afc037838f142e6b",
+    "available": false
+  },
+  {
+    "label": "C-recreate",
+    "operationId": "09ccc1dbafce4ec097f86764ef578bca",
+    "available": true,
+    "method": "collection.sync",
+    "state": "succeeded",
+    "createdAt": "2026-10-17T13:25:22.837Z",
+    "updatedAt": "2026-10-17T13:25:23.049Z",
+    "collectionComplete": true,
+    "errorType": null
+  },
+  {
+    "label": "C-restart",
+    "operationId": "68b44ebcf8484bc78537c8ff3208a0ce",
+    "available": false
+  },
+  {
+    "label": "D",
+    "operationId": "9c7c4cf52eee468097cafc01c3325787",
+    "available": true,
+    "method": "collection.sync",
+    "state": "failed",
+    "createdAt": "2026-10-17T13:25:56.537Z",
+    "updatedAt": "2026-10-17T13:26:26.857Z",
+    "collectionComplete": null,
+    "errorType": "ioError"
+  },
+  {
+    "label": "D",
+    "operationId": "83c15be2e49b497d803b80e55d7ebb36",
+    "available": true,
+    "method": "collection.sync",
+    "state": "succeeded",
+    "createdAt": "2026-10-17T13:26:43.986Z",
+    "updatedAt": "2026-10-17T13:26:44.265Z",
+    "collectionComplete": true,
+    "errorType": null
+  }
+]

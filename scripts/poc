@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+"""Host-side command shortcuts for the POC; the Rust binary does API work.
+
+For example, `scripts/poc driver create demo` starts a temporary CLI container.
+`scripts/poc restart` manages the long-running Anki container. This Python file
+does not create/edit Anki notes itself and never removes the data volume.
+"""
+import json
+import os
+from pathlib import Path
+import shlex
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parent.parent
+# Compose resolves project files and bind mounts from this project directory.
+os.chdir(ROOT)
+
+def docker(*args, capture=False, check=True):
+    """Run Docker; normally stream output, or capture stdout for callers to parse.
+
+    *args collects positional arguments into a tuple. Building an argument list
+    avoids shell parsing. The sg fallback does require a shell command string,
+    so shlex.join quotes every argument rather than concatenating raw strings.
+    """
+    # An optional env file selects an isolated user's Compose project/paths.
+    if args and args[0] == "compose" and os.environ.get("POC_ENV_FILE"):
+        args = ("compose", "--env-file", os.environ["POC_ENV_FILE"], *args[1:])
+    command = ["docker", *args]
+    # A newly granted group may not yet be in the parent desktop app's groups.
+    if not os.access("/var/run/docker.sock", os.R_OK | os.W_OK):
+        command = ["sg", "docker", "-c", shlex.join(command)]
+    env = os.environ.copy()
+    try:
+        return subprocess.run(command, env=env, check=check, text=True,
+                              stdout=subprocess.PIPE if capture else None)
+    except subprocess.CalledProcessError as error:
+        # The CLI already explains expected failures (e.g. the outage experiment).
+        raise SystemExit(error.returncode) from None
+
+def container():
+    """Return the dedicated service's ID, including when it is stopped (-a)."""
+    value = docker("compose", "ps", "-aq", "anki", capture=True).stdout.strip()
+    if not value:
+        raise SystemExit("No POC container exists")
+    return value
+
+def stop():
+    """Wait for Docker shutdown, then refuse further steps after an unclean exit."""
+    cid = container()
+    docker("compose", "stop", "anki")
+    state = json.loads(docker("inspect", "--format", "{{json .State}}", cid, capture=True).stdout)
+    if state["Running"] or state["ExitCode"] != 0:
+        raise SystemExit("Anki did not stop cleanly. Inspect logs/onboarding status before recreation.")
+
+def driver(*args):
+    """Remove only the temporary CLI container on exit; .state is a host mount.
+
+    --no-deps means a typo or diagnostic command will not silently start Anki.
+    """
+    return docker("compose", "run", "--rm", "--no-deps", "driver", *args)
+
+def configuration():
+    """Resolve Compose variables without reading or printing secret contents."""
+    return json.loads(docker("compose", "--profile", "tools", "config", "--format", "json", capture=True).stdout)
+
+
+def secret_file():
+    # Resolve beside this user's API key rather than hard-coding .secrets.
+    return Path(configuration()["secrets"]["api-key"]["file"]).parent / "ankiweb.json"
+
+
+def internet_network():
+    return configuration()["networks"]["internet"]["name"]
+
+
+args = sys.argv[1:]
+command = args[0] if args else "help"
+if command == "init":
+    if os.environ.get("POC_ENV_FILE"):
+        config = configuration()
+        state = next(v["source"] for v in config["services"]["driver"]["volumes"]
+                     if v["target"] == "/state")
+        subprocess.run([sys.executable, "scripts/init.py", str(secret_file().parent), state], check=True)
+    else:
+        subprocess.run([sys.executable, "scripts/init.py"], check=True)
+elif command == "build":
+    docker("compose", "build")
+elif command == "credentials":
+    subprocess.run([sys.executable, "scripts/credentials.py", str(secret_file())], check=True)
+elif command == "onboard":
+    if docker("compose", "ps", "-q", "anki", capture=True).stdout.strip():
+        raise SystemExit("Stop this user's service before onboarding: scripts/poc stop")
+    secret = secret_file()
+    if not secret.is_file():
+        raise SystemExit("Run scripts/poc credentials, or supply a private ankiweb.json secret")
+    # A one-shot container shares the user's persistent volume, never publishes
+    # API ports, and receives credentials only for this invocation. A second
+    # process on the same volume is also rejected by the entrypoint's lock.
+    docker("compose", "run", "--rm", "--no-deps",
+           "--volume", f"{secret}:/run/secrets/ankiweb.json:ro",
+           "--env", "POC_BOOTSTRAP_ONLY=1", "--env", "ANKI_INITIAL_SYNC=download", "anki")
+    secret.unlink()
+    print("Onboarding complete; host credential file removed. Run scripts/poc up.")
+elif command == "onboarding-status":
+    docker("compose", "run", "--rm", "--no-deps", "--entrypoint", "cat",
+           "anki", "/data/onboarding-status.json")
+elif command == "up":
+    docker("compose", "up", "-d", "anki")
+elif command == "stop":
+    stop()
+elif command in ("restart", "recreate"):
+    # Both paths first verify graceful shutdown. rm removes a container, not
+    # our named data volume: there is intentionally no `down -v` command here.
+    stop()
+    if command == "recreate":
+        docker("compose", "rm", "-f", "anki")
+        docker("compose", "up", "-d", "anki")
+    else:
+        docker("compose", "start", "anki")
+    driver("ready")
+elif command == "offline":
+    # Only disconnect external connectivity. The separate internal network must
+    # remain attached so we can observe the failed sync through AnkiConnect.
+    docker("network", "disconnect", internet_network(), container())
+    driver("ready")  # The private control path must still work.
+    print("Internet network disconnected. Run driver sync D; API remains reachable.")
+elif command == "online":
+    docker("network", "connect", internet_network(), container())
+    print("Internet restored. Observe original operation before retry-sync.")
+elif command == "driver":
+    driver(*args[1:])
+elif command == "smoke":
+    # A smoke test is a short end-to-end sanity check of LOCAL behavior. It does
+    # not sync AnkiWeb or claim that a phone has received anything.
+    label = args[1] if len(args) > 1 else "A"
+    driver("ready")
+    driver("create", label)
+    driver("verify", label)
+elif command == "doctor":
+    docker("version")
+    docker("compose", "version")
+    docker("compose", "ps")
+    docker("image", "inspect", "anki-poc:local", "--format", "image={{.Id}} arch={{.Architecture}}")
+    docker("compose", "exec", "-T", "anki", "cat", "/opt/poc/ankiconnect-revision")
+    docker("compose", "exec", "-T", "anki", "cat", "/opt/poc/python-versions.txt")
+    docker("compose", "exec", "-T", "anki", "cat", "/opt/poc/os-versions.txt")
+elif command == "exposure":
+    cid = container()
+    docker("inspect", "--format", "{{json .HostConfig.PortBindings}}", cid)
+    # No unauthenticated request may read the collection.
+    docker("compose", "exec", "-T", "anki", "python3", "/opt/poc/check_exposure.py")
+else:
+    print("scripts/poc init|credentials|onboard|onboarding-status|build|up|stop|restart|recreate|offline|online|doctor|exposure")
+    print("scripts/poc driver COMMAND [LABEL]\nscripts/poc smoke [LABEL]")

@@ -1,0 +1,28 @@
+sequenceDiagram
+    autonumber
+    actor User as Operator
+    participant Runner as scripts/poc
+    participant CLI as Rust CLI
+    participant Anki as Anki + AnkiConnect
+    participant Net as Docker networks
+    participant Web as AnkiWeb
+    User->>CLI: create lab-outage-01
+    CLI->>Anki: create and verify exactly one note
+    User->>Runner: offline
+    Runner->>Net: disconnect internet network only
+    Runner->>CLI: ready through internal control network
+    CLI->>Anki: collection checks still succeed
+    User->>CLI: sync lab-outage-01
+    CLI->>Anki: collection.sync -> operation handle
+    Anki--xWeb: external route unavailable
+    CLI->>Anki: poll original operation
+    Anki-->>CLI: failed, ioError (observed in this POC)
+    Note over CLI,Anki: No sync_confirmed claim and no additional addNote
+    User->>Runner: online
+    Runner->>Net: reconnect internet network
+    User->>CLI: retry-sync lab-outage-01
+    CLI->>Anki: verify same note, submit new sync attempt only
+    Anki->>Web: synchronize existing note
+    Web-->>Anki: synchronization succeeds
+    CLI->>Anki: poll new operation -> succeeded
+    Note over User,Web: Explicit phone sync and inspection complete the experiment

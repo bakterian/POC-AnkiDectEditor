@@ -1,0 +1,15 @@
+.git
+.agents
+.codex
+.env
+.secrets
+.state
+target
+artifacts
+*.anki2*
+*.colpkg
+*.apkg
+
+
+__pycache__
+*.pyc

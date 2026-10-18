@@ -1,0 +1,34 @@
+sequenceDiagram
+    autonumber
+    actor User as Developer
+    participant CLI as Rust CLI
+    participant Journal as Journal file<br/>demo-01.json
+    participant API as AnkiConnect
+    participant Anki as Anki collection
+    User->>CLI: create demo-01
+    CLI->>Journal: lock state directory, load or save new UUID
+    CLI->>API: readiness checks + findNotes(request tag)
+    alt Exactly one existing match
+        API-->>CLI: existing note ID
+        CLI->>API: notesInfo + cardsInfo + uniqueness check
+        CLI->>Journal: persist verified created_locally
+    else Zero matches and journal is prepared
+        CLI->>Journal: persist failed_unknown BEFORE HTTP write
+        CLI->>API: addNote(fields, unique tag, duplicate check)
+        API->>Anki: create note and generated cards
+        alt Creation response received
+            API-->>CLI: note ID
+            CLI->>Journal: persist returned ID
+        else Response lost or ambiguous
+            API--xCLI: no usable creation result
+            loop Bounded read-only reconciliation
+                CLI->>API: readiness + findNotes(request tag)
+                API-->>CLI: zero, one, or multiple IDs
+            end
+        end
+        Note over CLI,Journal: Exactly one match is validated, zero/multiple stops without another addNote
+        CLI->>API: notesInfo + cardsInfo + uniqueness check
+        CLI->>Journal: created_locally only after successful validation
+    else Multiple matches or previously attempted with zero matches
+        Note over CLI: Stop, preserve journal for investigation
+    end

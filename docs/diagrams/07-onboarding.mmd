@@ -1,0 +1,28 @@
+sequenceDiagram
+    autonumber
+    actor User
+    participant Host as Host / future app
+    participant Boot as One-shot<br/>bootstrap
+    participant Data as Private user<br/>volume
+    participant Web as AnkiWeb
+    participant Anki as Normal Anki service
+    User->>Host: Connect account credentials
+    Host->>Boot: Read-only secret mount, download policy
+    Boot->>Data: Lock volume and check account binding
+    alt Account or profile mismatch
+        Boot-->>Host: Sanitized error, no remote login
+    else Matching account / fresh volume
+        Boot->>Web: Collection.sync_login(email, password)
+        Web-->>Boot: Authentication key
+        Boot->>Data: Save key in profile
+        opt Fresh, not-yet-served collection
+            Boot->>Web: Negotiate sync, download collection
+            Web-->>Boot: Existing collection
+            Boot->>Data: Save initialized state, ensure POC deck
+        end
+        Boot-->>Host: ready, close collection and exit
+        Host->>Host: Remove temporary credential file
+        Host->>Anki: Start without password mount
+        Anki->>Data: Read saved key and collection
+        Note over Anki,Data: Restart and recreation reuse this volume
+    end

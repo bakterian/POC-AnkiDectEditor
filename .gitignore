@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.secrets/
+.state/
+# Downloaded agent helpers and local tool configuration are not POC source.
+.agents/
+.codex/
+.10x-cli.json
+target/
+__pycache__/
+*.pyc
+*.anki2*
+*.colpkg
+*.apkg
+artifacts/private/

@@ -1,0 +1,56 @@
+name: ${COMPOSE_PROJECT_NAME:-anki-poc}
+services:
+  anki:
+    image: anki-poc:local
+    build:
+      context: .
+      dockerfile: container/Dockerfile
+    environment:
+      ANKI_PROFILE: ${ANKI_PROFILE:-POC}
+      ANKI_DECK: ${ANKI_DECK:-POC}
+      ANKI_MODEL: ${ANKI_MODEL:-Basic}
+    ports:
+      - "127.0.0.1:${ANKI_API_PORT:-8765}:8765"
+    volumes:
+      - anki-data:/data
+    secrets:
+      - api-key
+    networks:
+      - control
+      - internet
+    tmpfs:
+      - /run/poc:mode=0700
+    shm_size: 512m
+    stop_grace_period: 90s
+    healthcheck:
+      test: ["CMD", "anki-poc", "ready", "--once"]
+      interval: 15s
+      timeout: 12s
+      retries: 4
+      start_period: 60s
+  driver:
+    image: anki-poc:local
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    profiles: ["tools"]
+    entrypoint: ["anki-poc"]
+    environment:
+      ANKI_URL: http://anki:8765
+      ANKI_API_KEY_FILE: /run/secrets/api-key
+      ANKI_STATE_DIR: /state
+      ANKI_PROFILE: ${ANKI_PROFILE:-POC}
+      ANKI_DECK: ${ANKI_DECK:-POC}
+      ANKI_MODEL: ${ANKI_MODEL:-Basic}
+    volumes:
+      - ${POC_STATE_DIR:-./.state}:/state
+    secrets: [api-key]
+    networks: [control]
+secrets:
+  api-key:
+    file: ${POC_SECRETS_DIR:-./.secrets}/api-key
+volumes:
+  anki-data:
+networks:
+  control:
+    internal: true
+  internet:
+    driver: bridge

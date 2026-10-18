@@ -1,0 +1,50 @@
+[
+  {
+    "label": "E-onboarding",
+    "request_id": "24cc128c17674507bb03ecb07f1b8801",
+    "note_id": 1792333211224,
+    "creation": "created_locally",
+    "sync": [
+      {
+        "requested_at_ms": 1792333213789,
+        "request_latency_ms": 46,
+        "operation_id": "86ae725c91b64085838c527851d1da8c",
+        "status": "sync_confirmed",
+        "confirmed_at_ms": 1792333214438
+      }
+    ],
+    "phone_observed_at_ms": null
+  },
+  {
+    "label": "E-restart",
+    "request_id": "9b1a5c3cfcff4ab49807245414a893ff",
+    "note_id": 1792333223522,
+    "creation": "created_locally",
+    "sync": [
+      {
+        "requested_at_ms": 1792333226114,
+        "request_latency_ms": 46,
+        "operation_id": "2fe7534f787645af87d959e3b6ba324b",
+        "status": "sync_confirmed",
+        "confirmed_at_ms": 1792333226762
+      }
+    ],
+    "phone_observed_at_ms": null
+  },
+  {
+    "label": "E-recreate",
+    "request_id": "0a2a49cdfc2c4914a239113de3e752de",
+    "note_id": 1792333350173,
+    "creation": "created_locally",
+    "sync": [
+      {
+        "requested_at_ms": 1792333352765,
+        "request_latency_ms": 44,
+        "operation_id": "d4a355217437406aae3560519688ba0f",
+        "status": "sync_confirmed",
+        "confirmed_at_ms": 1792333353412
+      }
+    ],
+    "phone_observed_at_ms": null
+  }
+]

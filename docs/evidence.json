@@ -1,0 +1,105 @@
+{
+  "exported_at": "2026-10-17T13:28:45.889435+00:00",
+  "scope": "Synthetic text-only test cards; phone timestamps require human confirmation",
+  "records": [
+    {
+      "label": "A",
+      "request_id": "49c95919ba524116a56802a73772ad20",
+      "profile": "POC",
+      "deck": "POC",
+      "model": "Basic",
+      "front": "POC A 49c95919ba524116a56802a73772ad20 — zażółć gęślą jaźń",
+      "back": "Anki integration POC — Unicode: Łódź, 日本語, 🧠",
+      "created_at_ms": 1792243423688,
+      "creation": "created_locally",
+      "note_id": 1792243424144,
+      "readback_at_ms": 1792243518186,
+      "sync": [
+        {
+          "requested_at_ms": 1792243426163,
+          "request_latency_ms": 46,
+          "operation_id": "6b50284c63d74a93afc037838f142e6b",
+          "status": "sync_confirmed",
+          "confirmed_at_ms": 1792243426811
+        }
+      ],
+      "phone_observed_at_ms": 1792243551638
+    },
+    {
+      "label": "C-restart",
+      "request_id": "896883bb82354ad295de8dfa1128e4e1",
+      "profile": "POC",
+      "deck": "POC",
+      "model": "Basic",
+      "front": "POC C-restart 896883bb82354ad295de8dfa1128e4e1 — zażółć gęślą jaźń",
+      "back": "Anki integration POC — Unicode: Łódź, 日本語, 🧠",
+      "created_at_ms": 1792243473600,
+      "creation": "created_locally",
+      "note_id": 1792243474068,
+      "readback_at_ms": 1792243519137,
+      "sync": [
+        {
+          "requested_at_ms": 1792243476112,
+          "request_latency_ms": 47,
+          "operation_id": "68b44ebcf8484bc78537c8ff3208a0ce",
+          "status": "sync_confirmed",
+          "confirmed_at_ms": 1792243476761
+        }
+      ],
+      "phone_observed_at_ms": 1792243724900
+    },
+    {
+      "label": "C-recreate",
+      "request_id": "b7bb7cc9df394e7ebe7b76b7cf778315",
+      "profile": "POC",
+      "deck": "POC",
+      "model": "Basic",
+      "front": "POC C-recreate b7bb7cc9df394e7ebe7b76b7cf778315 — zażółć gęślą jaźń",
+      "back": "Anki integration POC — Unicode: Łódź, 日本語, 🧠",
+      "created_at_ms": 1792243520292,
+      "creation": "created_locally",
+      "note_id": 1792243520744,
+      "readback_at_ms": 1792243522811,
+      "sync": [
+        {
+          "requested_at_ms": 1792243522812,
+          "request_latency_ms": 47,
+          "operation_id": "09ccc1dbafce4ec097f86764ef578bca",
+          "status": "sync_confirmed",
+          "confirmed_at_ms": 1792243523461
+        }
+      ],
+      "phone_observed_at_ms": 1792243725319
+    },
+    {
+      "label": "D",
+      "request_id": "c722862ae35b48bfbd86f4e29d8a4854",
+      "profile": "POC",
+      "deck": "POC",
+      "model": "Basic",
+      "front": "POC D c722862ae35b48bfbd86f4e29d8a4854 — zażółć gęślą jaźń",
+      "back": "Anki integration POC — Unicode: Łódź, 日本語, 🧠",
+      "created_at_ms": 1792243552828,
+      "creation": "created_locally",
+      "note_id": 1792243553267,
+      "readback_at_ms": 1792243605536,
+      "sync": [
+        {
+          "requested_at_ms": 1792243556513,
+          "request_latency_ms": 46,
+          "operation_id": "9c7c4cf52eee468097cafc01c3325787",
+          "status": "failed",
+          "confirmed_at_ms": null
+        },
+        {
+          "requested_at_ms": 1792243603963,
+          "request_latency_ms": 47,
+          "operation_id": "83c15be2e49b497d803b80e55d7ebb36",
+          "status": "sync_confirmed",
+          "confirmed_at_ms": 1792243604611
+        }
+      ],
+      "phone_observed_at_ms": 1792243725730
+    }
+  ]
+}
