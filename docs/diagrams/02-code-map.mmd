@@ -1,0 +1,45 @@
+flowchart TB
+    subgraph HOST["Host-side tools"]
+        INIT["scripts/init.py<br/>create local configuration and secrets"]
+        CREDS["scripts/credentials.py<br/>hidden password prompt"]
+        POC["scripts/poc<br/>dispatch Docker commands"]
+        EXPORT["export_evidence.py<br/>capture_operations.py<br/>write sanitized reports"]
+    end
+    subgraph START["Anki container startup"]
+        ENTRY["entrypoint.py<br/>volume lock, add-on config, permissions"]
+        SUP["supervisor.py<br/>child processes and graceful close"]
+        PREP["prepare_profile.py<br/>profile metadata and preferences"]
+        MODE["onboarding.py<br/>bind account, login, first Download"]
+        EXPOSURE["check_exposure.py<br/>negative auth and listener checks"]
+    end
+    subgraph RUST["src/main.rs"]
+        RUN["main -> run<br/>parse command, lock state, load Record"]
+        CREATE["create / reconcile / verify<br/>add once and read back"]
+        SYNC["sync / poll_sync<br/>submit or observe an operation"]
+        API["Api::call / Api::rpc<br/>HTTP envelopes and error checks"]
+        RECORD["Record / SyncAttempt<br/>save / load<br/>durable request journal"]
+    end
+    TESTS["tests/test_driver.py + test_onboarding.py<br/>HTTP faults + provisioning policy"]
+    POC --> INIT
+    POC --> CREDS
+    POC --> ENTRY
+    ENTRY --> SUP
+    SUP --> PREP
+    ENTRY -->|one-shot mode| MODE
+    MODE --> PREP
+    POC --> EXPOSURE
+    POC --> RUN
+    RUN --> CREATE
+    RUN --> SYNC
+    CREATE --> API
+    SYNC --> API
+    RUN --> RECORD
+    CREATE --> RECORD
+    SYNC --> RECORD
+    EXPORT -.->|reads persisted evidence| RECORD
+    TESTS -.->|executes CLI as subprocess| RUN
+    TESTS -.->|checks account and download policy| MODE
+    classDef rust fill:#fff0e6,stroke:#a65a28,color:#542b12
+    classDef python fill:#e8f0fe,stroke:#3567a8,color:#142b49
+    class RUN,CREATE,SYNC,API,RECORD rust
+    class INIT,CREDS,POC,EXPORT,ENTRY,SUP,PREP,MODE,EXPOSURE,TESTS python

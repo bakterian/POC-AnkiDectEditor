@@ -1,0 +1,14 @@
+[package]
+name = "anki-poc"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.90"
+
+[dependencies]
+anyhow = "=1.0.100"
+fs2 = "=0.4.3"
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = "=1.0.145"
+ureq = { version = "=2.12.1", default-features = false, features = ["json"] }
+uuid = { version = "=1.18.1", features = ["v4"] }
+

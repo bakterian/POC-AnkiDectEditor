@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor User as Operator
+    participant CLI as Rust CLI
+    participant Journal as Request journal
+    participant API as AnkiConnect v1
+    participant Web as AnkiWeb
+    participant Phone as AnkiDroid
+    User->>CLI: sync demo-01
+    CLI->>API: readiness + verify the existing note
+    CLI->>Journal: persist attempt before sending
+    CLI->>API: collection.sync(session, includeMedia=false)
+    API-->>CLI: operationId (accepted, not completed)
+    CLI->>Journal: save handle, request latency, sync_requested
+    API->>Web: native Anki collection synchronization
+    loop Until terminal state or timeout
+        CLI->>API: operations.get(operationId)
+        API-->>CLI: queued / running / terminal / waitingForUser
+    end
+    alt succeeded and collectionComplete=true
+        CLI->>Journal: sync_confirmed + observation timestamp
+        User->>Phone: explicitly sync
+        Phone->>Web: download changes
+        Web-->>Phone: new card
+        User->>Phone: inspect both sides and Unicode
+        User->>CLI: confirm-phone demo-01 --observed
+        CLI->>Journal: separate human observation timestamp
+    else failed or cancelled
+        CLI->>Journal: terminal failure, explicit retry may follow repair
+    else waitingForUser
+        CLI->>Journal: waiting_for_user
+        Note over User,API: Stop automated writes, administrative conflict recovery
+    else timeout or lost response
+        CLI->>Journal: failed_unknown, preserve any received handle
+        Note over CLI,Journal: No new sync submission until the prior outcome is known
+    end

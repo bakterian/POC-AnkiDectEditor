@@ -1,0 +1,44 @@
+flowchart TB
+    subgraph HOST["Linux Docker host"]
+        USER["Operator"]
+        RUNNER["Python runner<br/>scripts/poc"]
+        JOURNAL[("Host .state/<br/>Request journal")]
+        SECRETS[("Host .secrets/<br/>API key + temporary login secret")]
+        subgraph CONTROL["Private internal control network"]
+            DRIVER["Rust CLI container<br/>One command per run"]
+            BOOT["One-shot onboarding container<br/>Backend login + Download"]
+            subgraph SERVICE["Long-running anki container"]
+                SUP["Python supervisor<br/>Xvfb + child supervision"]
+                CONNECT["AnkiConnect<br/>container port 8765"]
+                ANKI["Anki Desktop<br/>profile POC"]
+            end
+        end
+        DATA[("Volume: anki-data<br/>Collection + profile + auth")]
+        INTERNET["Internet network<br/>Detachable for outage test"]
+    end
+    WEB["AnkiWeb"]
+    PHONE["Test phone: AnkiDroid<br/>User syncs and inspects"]
+    USER --> RUNNER
+    RUNNER -->|Docker commands| DRIVER
+    RUNNER -->|lifecycle / onboarding| SERVICE
+    DRIVER -->|authenticated HTTP| CONNECT
+    DRIVER <-->|read / persist| JOURNAL
+    SECRETS -.->|API key only| DRIVER
+    SECRETS -.->|API key only| SERVICE
+    SECRETS -.->|temporary login secret| BOOT
+    SUP --> ANKI
+    CONNECT -->|inside Anki process| ANKI
+    ANKI <-->|Anki owns these files| DATA
+    BOOT <-->|initialize only| DATA
+    BOOT --> INTERNET
+    ANKI --> INTERNET
+    INTERNET <-->|HTTPS sync| WEB
+    PHONE <-->|HTTPS sync| WEB
+    classDef app fill:#e8f0fe,stroke:#3567a8,color:#142b49
+    classDef data fill:#fff4d9,stroke:#af7b13,color:#553c09
+    classDef external fill:#e6f4ea,stroke:#348454,color:#173e28
+    classDef optional fill:#f4ecfa,stroke:#8657a6,color:#46255d
+    class DRIVER,CONNECT,ANKI,SUP,RUNNER app
+    class JOURNAL,SECRETS,DATA data
+    class WEB,PHONE external
+    class BOOT optional

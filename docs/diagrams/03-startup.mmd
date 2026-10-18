@@ -1,0 +1,28 @@
+sequenceDiagram
+    autonumber
+    actor User as Operator
+    participant Runner as scripts/poc
+    participant Docker
+    participant Entry as entrypoint.py
+    participant Disk as Persistent /data
+    participant Sup as supervisor.py
+    participant Anki as Anki + AnkiConnect
+    participant Driver as Rust readiness check
+    User->>Runner: up (after successful onboarding)
+    Runner->>Docker: compose up -d anki
+    Docker->>Entry: start with volume + secret mounts
+    Entry->>Disk: acquire exclusive process lock
+    alt Another process owns this volume
+        Disk-->>Entry: lock acquisition fails
+        Note over Entry: Stop before modifying profile or add-on
+    else Lock acquired
+        Entry->>Disk: check pinned revision, write add-on config
+        Entry->>Sup: exec as non-root, inherit lock descriptor
+        Sup->>Sup: start Xvfb, wait for its socket
+        Sup->>Disk: prepare_profile.py checks auth and initialization
+        Sup->>Anki: start with explicit base directory and profile
+        Anki->>Disk: open collection and saved authentication
+        Driver->>Anki: check API/version, profile, session, deck, fields
+        Anki-->>Driver: validated collection and capabilities
+        Note over Driver: READY checks local contract, remote auth can later expire
+    end
